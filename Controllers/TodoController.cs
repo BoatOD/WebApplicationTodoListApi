@@ -48,13 +48,13 @@ namespace WebApplicationTodoList.Controllers
         [HttpDelete("{todoId}")]
         public ActionResult Remove([FromRoute] Guid todoId)
         {
-            var dataToRemove = todoList.Where(t => t.Id.ToString().Contains(todoId.ToString(), StringComparison.OrdinalIgnoreCase)).ToList();
-            if (dataToRemove.Count() <= 0)
+            TodoEntry dataToRemove = todoList.Find(t => t.Id == todoId);
+            if (dataToRemove == null)
             {
                 return Conflict("This Todo Id doesn't exist.");
             } else
             {
-                todoList.Remove(dataToRemove[0]);
+                todoList.Remove(dataToRemove);
                 return Ok($"Delete Succeed: {todoId.ToString()}");
             }
         }
@@ -62,7 +62,24 @@ namespace WebApplicationTodoList.Controllers
         [HttpPut("{todoId}")]
         public ActionResult Replace([FromRoute] Guid todoId, [FromBody] TodoEntryViewModel entry)
         {
-            throw new NotImplementedException();
+            TodoEntry dataToUpdate = todoList.Find(t => t.Id == todoId);
+
+            if (dataToUpdate == null)
+            {
+                return Conflict("This Todo Id doesn't exist.");
+            }
+            else
+            {
+                int index = todoList.IndexOf(dataToUpdate);
+                todoList[index].Title = entry.Title;
+                todoList[index].Description = entry.Description;
+                if (entry.DueDate != null)
+                {
+                    todoList[index].DueDate = entry.DueDate;
+                }
+                todoList[index].UpdateDate = DateTime.Now;
+                return Ok($"Update todo succeed");
+            }
         }
     }
 }
