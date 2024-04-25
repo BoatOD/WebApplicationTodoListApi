@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualBasic;
-using WebApiDemo.ViewModels;
+using WebApplicationTodoList.ViewModels;
 using WebApplicationTodoList.Models;
+using System.Linq;
 
 namespace WebApplicationTodoList.Controllers
 {
@@ -47,7 +48,15 @@ namespace WebApplicationTodoList.Controllers
         [HttpDelete("{todoId}")]
         public ActionResult Remove([FromRoute] Guid todoId)
         {
-            throw new NotImplementedException();
+            var dataToRemove = todoList.Where(t => t.Id.ToString().Contains(todoId.ToString(), StringComparison.OrdinalIgnoreCase)).ToList();
+            if (dataToRemove.Count() <= 0)
+            {
+                return Conflict("This Todo Id doesn't exist.");
+            } else
+            {
+                todoList.Remove(dataToRemove[0]);
+                return Ok($"Delete Succeed: {todoId.ToString()}");
+            }
         }
 
         [HttpPut("{todoId}")]
