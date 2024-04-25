@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WebApiDemo.ViewModels
+namespace WebApplicationTodoList.ViewModels
 {
     public class TodoEntryViewModel
     {
