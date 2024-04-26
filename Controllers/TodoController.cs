@@ -12,21 +12,24 @@ namespace WebApplicationTodoList.Controllers
     {
         private static List<TodoEntry> todoList = new();
         private readonly ILogger<TodoController> _logger;
-        public TodoController(ILogger<TodoController> logger)
+
+        private readonly WebApiDemoContext _Context;
+        public TodoController(ILogger<TodoController> logger, WebApiDemoContext context)
         {
             _logger = logger;
+            _Context = context;
         }
 
         [HttpGet]
         public ActionResult List()
         {
-            return Ok(todoList);
+            return Ok(_Context.TodoEntries.ToList());
         }
 
         [HttpGet("filter")]
         public ActionResult Search([FromQuery] string name)
         {
-            return Ok(todoList
+            return Ok(_Context.TodoEntries
                 .Where(todo => todo.Title.Contains(name))
                 .ToList());
         }
@@ -36,25 +39,27 @@ namespace WebApplicationTodoList.Controllers
         {
             var newTodoEntry = new TodoEntry(entry.Title, entry.Description, entry.DueDate);
 
-            if (todoList.Any(existingTodo => existingTodo.Id == newTodoEntry.Id))
+            if (_Context.TodoEntries.Any(existingTodo => existingTodo.Id == newTodoEntry.Id))
             {
                 return Conflict("Duplicated Todo Id");
             }
 
-            todoList.Add(newTodoEntry);
+            _Context.TodoEntries.Add(newTodoEntry);
+            _Context.SaveChanges();
             return Created($"/{newTodoEntry.Id}", entry);
         }
 
         [HttpDelete("{todoId}")]
         public ActionResult Remove([FromRoute] Guid todoId)
         {
-            TodoEntry dataToRemove = todoList.Find(t => t.Id == todoId);
+            TodoEntry? dataToRemove = _Context.TodoEntries.FirstOrDefault(t => t.Id == todoId);
             if (dataToRemove == null)
             {
                 return Conflict("This Todo Id doesn't exist.");
             } else
             {
-                todoList.Remove(dataToRemove);
+                _Context.TodoEntries.Remove(dataToRemove);
+                _Context.SaveChanges();
                 return Ok($"Delete Succeed: {todoId.ToString()}");
             }
         }
@@ -62,7 +67,7 @@ namespace WebApplicationTodoList.Controllers
         [HttpPut("{todoId}")]
         public ActionResult Replace([FromRoute] Guid todoId, [FromBody] TodoEntryViewModel entry)
         {
-            TodoEntry dataToUpdate = todoList.Find(t => t.Id == todoId);
+            TodoEntry? dataToUpdate = _Context.TodoEntries.FirstOrDefault(t => t.Id == todoId);
 
             if (dataToUpdate == null)
             {
@@ -70,14 +75,20 @@ namespace WebApplicationTodoList.Controllers
             }
             else
             {
-                int index = todoList.IndexOf(dataToUpdate);
-                todoList[index].Title = entry.Title;
-                todoList[index].Description = entry.Description;
+                if (entry.Title != null)
+                {
+                    dataToUpdate.Title = entry.Title;
+                }
+                if (entry.Description != null)
+                {
+                    dataToUpdate.Description = entry.Description;
+                }
                 if (entry.DueDate != null)
                 {
-                    todoList[index].DueDate = entry.DueDate;
+                    dataToUpdate.DueDate = entry.DueDate;
                 }
-                todoList[index].UpdateDate = DateTime.Now;
+                dataToUpdate.UpdateDate = DateTime.Now;
+                _Context.SaveChanges();
                 return Ok($"Update todo succeed");
             }
         }

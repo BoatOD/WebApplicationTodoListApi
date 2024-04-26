@@ -1,4 +1,7 @@
 
+using Microsoft.EntityFrameworkCore;
+using WebApplicationTodoList.Models;
+
 namespace WebApplicationTodoList
 {
     public class Program
@@ -10,6 +13,7 @@ namespace WebApplicationTodoList
             // Add services to the container.
 
             builder.Services.AddControllers();
+            builder.Services.AddDbContext<WebApiDemoContext>(opt => opt.UseInMemoryDatabase("WebApiDemo"));
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
