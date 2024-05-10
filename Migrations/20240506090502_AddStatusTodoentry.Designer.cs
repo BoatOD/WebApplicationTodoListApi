@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApplicationTodoList.Models;
 
@@ -11,9 +12,11 @@ using WebApplicationTodoList.Models;
 namespace WebApplicationTodoList.Migrations
 {
     [DbContext(typeof(WebApiDemoContext))]
-    partial class WebApiDemoContextModelSnapshot : ModelSnapshot
+    [Migration("20240506090502_AddStatusTodoentry")]
+    partial class AddStatusTodoentry
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

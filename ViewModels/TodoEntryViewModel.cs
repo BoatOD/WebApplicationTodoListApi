@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using WebApplicationTodoList.Models;
 
 namespace WebApplicationTodoList.ViewModels
 {
@@ -13,5 +14,7 @@ namespace WebApplicationTodoList.ViewModels
         public string? Description { get; set; }
 
         public DateTime? DueDate { get; set; }
+        public string Status { get; set; }
+        //public string[] Tags { get; set; }
     }
 }

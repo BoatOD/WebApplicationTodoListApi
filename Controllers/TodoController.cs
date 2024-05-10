@@ -3,6 +3,7 @@ using Microsoft.VisualBasic;
 using WebApplicationTodoList.ViewModels;
 using WebApplicationTodoList.Models;
 using System.Linq;
+using WebApplicationTodoList.Services;
 
 namespace WebApplicationTodoList.Controllers
 {
@@ -14,82 +15,73 @@ namespace WebApplicationTodoList.Controllers
         private readonly ILogger<TodoController> _logger;
 
         private readonly WebApiDemoContext _Context;
-        public TodoController(ILogger<TodoController> logger, WebApiDemoContext context)
+        private readonly TodoService _todoService;
+
+        public TodoController(ILogger<TodoController> logger, TodoService todoService, WebApiDemoContext context)
         {
             _logger = logger;
             _Context = context;
+            _todoService = todoService;
         }
 
         [HttpGet]
         public ActionResult List()
         {
-            return Ok(_Context.TodoEntries.ToList());
+            return Ok(_todoService.GetAll());
         }
 
         [HttpGet("filter")]
         public ActionResult Search([FromQuery] string name)
         {
-            return Ok(_Context.TodoEntries
-                .Where(todo => todo.Title.Contains(name))
-                .ToList());
+            return Ok(_todoService.FilterByName(name));
         }
 
         [HttpPost]
-        public ActionResult Add([FromBody] TodoEntryViewModel entry)
+        public async Task<ActionResult> Add([FromBody] TodoEntryViewModel entry)
         {
-            var newTodoEntry = new TodoEntry(entry.Title, entry.Description, entry.DueDate);
-
-            if (_Context.TodoEntries.Any(existingTodo => existingTodo.Id == newTodoEntry.Id))
+            var newTodoEntry = new TodoEntry(entry.Title, entry.Description, entry.DueDate, entry.Status);
+            if (!await _todoService.AddTodo(newTodoEntry))
             {
-                return Conflict("Duplicated Todo Id");
+                return Conflict("Duplicate Todo.");
             }
-
-            _Context.TodoEntries.Add(newTodoEntry);
-            _Context.SaveChanges();
             return Created($"/{newTodoEntry.Id}", entry);
         }
 
         [HttpDelete("{todoId}")]
-        public ActionResult Remove([FromRoute] Guid todoId)
+        public async Task<ActionResult> Remove([FromRoute] Guid todoId)
         {
-            TodoEntry? dataToRemove = _Context.TodoEntries.FirstOrDefault(t => t.Id == todoId);
-            if (dataToRemove == null)
+            if (!await _todoService.RemoveTodo(todoId))
             {
                 return Conflict("This Todo Id doesn't exist.");
             } else
             {
-                _Context.TodoEntries.Remove(dataToRemove);
-                _Context.SaveChanges();
                 return Ok($"Delete Succeed: {todoId.ToString()}");
             }
         }
 
         [HttpPut("{todoId}")]
-        public ActionResult Replace([FromRoute] Guid todoId, [FromBody] TodoEntryViewModel entry)
+        public async Task<ActionResult> Replace([FromRoute] Guid todoId, [FromBody] TodoEntryViewModel entry)
         {
-            TodoEntry? dataToUpdate = _Context.TodoEntries.FirstOrDefault(t => t.Id == todoId);
-
-            if (dataToUpdate == null)
+            if (await _todoService.UpdateTodo(todoId, entry))
             {
-                return Conflict("This Todo Id doesn't exist.");
+                return Ok($"Update Succeed");
             }
             else
             {
-                if (entry.Title != null)
-                {
-                    dataToUpdate.Title = entry.Title;
-                }
-                if (entry.Description != null)
-                {
-                    dataToUpdate.Description = entry.Description;
-                }
-                if (entry.DueDate != null)
-                {
-                    dataToUpdate.DueDate = entry.DueDate;
-                }
-                dataToUpdate.UpdateDate = DateTime.Now;
-                _Context.SaveChanges();
-                return Ok($"Update todo succeed");
+                return Conflict("This Todo Id doesn't exist.");
+            }
+        }
+
+        [HttpPut("status/{todoId}")]
+        public async Task<ActionResult> ReplaceStatus([FromRoute] Guid todoId, [FromBody] string status)
+        {
+            if (await _todoService.UpdateStatusTodo(todoId, status))
+            {
+                return Ok($"Update Status Succeed");
+            }
+            else
+            {
+                return Conflict("This Todo Id doesn't exist.");
             }
         }
     }

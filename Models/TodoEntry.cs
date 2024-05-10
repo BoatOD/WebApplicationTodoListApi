@@ -18,10 +18,13 @@ public class TodoEntry
     public DateTime CreateDate { get; set; }
     public DateTime UpdateDate { get; set; }
     public DateTime? DueDate { get; set; }
+    public string Status { get; set; }
+
+    //public List<TodoTags> Tags { get; set; }
 
     public TodoEntry() { }
 
-    public TodoEntry(string title, string? description = null, DateTime? dueDate = null)
+    public TodoEntry(string title, string? description = null, DateTime? dueDate = null, string status = "Not Started")
     {
         Id = Guid.NewGuid();
         Title = title;
@@ -29,6 +32,7 @@ public class TodoEntry
         CreateDate = DateTime.Now;
         UpdateDate = DateTime.Now;
         DueDate = dueDate;
+        Status = status;
     }
 
     public TodoEntry(TodoEntry entry)
@@ -39,10 +43,6 @@ public class TodoEntry
         CreateDate = entry.CreateDate;
         UpdateDate = entry.UpdateDate;
         DueDate = entry.DueDate;
-    }
-
-    public override string ToString()
-    {
-        return $"[{Id}] {Title} {Description} {DueDate?.ToString("o")}";
+        Status = entry.Status;
     }
 }
